@@ -5,6 +5,17 @@ def pegaPalavras(nome):
         linha[c] = linha[c].replace('\n', '',-1)
     return linha.copy()
 
+
+def escolhaPalavra(lista):
+    from random import choice
+    if lista:
+        escolhida = choice(lista)
+        lista.remove(escolhida)
+        return escolhida.upper()
+    else:
+        print("Acabou as palvra")
+
+
 def coresNoTerminal(frase, cor, retorno=0):
     cores = {
         'reset': '\033[0m',
@@ -19,15 +30,6 @@ def coresNoTerminal(frase, cor, retorno=0):
     else:
         return (cores[cor] + frase + cores['reset'])
 
-def escolhaPalavra(lista):
-    from random import choice
-    if lista:
-        escolhida = choice(lista)
-        lista.remove(escolhida)
-        return escolhida
-    else:
-        print("Acabou as palvra")
-
 
 def limparTerminal():
     from os import system
@@ -35,7 +37,6 @@ def limparTerminal():
 
 
 def menu():
-    limparTerminal()
     while True:
         try:
             print("""## Jogo da forca ##
@@ -49,15 +50,20 @@ def menu():
             coresNoTerminal("# Digite uma opção valida #", "vermelho")
         else:
             if 1 <= resposta <= 3:
-                break
+                return resposta
             coresNoTerminal("# Digite uma opção valida #", "vermelho")
-    limparTerminal()
-    match resposta:
+
+
+def escolha(escolha,  podio, listaPalavras):
+    match escolha:
         case 1:
-            forca(cadastroJogador())
+            jogador = cadastroJogador()
+            pontos = forca(jogador, listaPalavras)
+            podio[jogador] = pontos
             return True
         case 2:
-            ranking()  
+            podio = dict(sorted(podio.items()))
+            ranking(podio)  
             return True 
         case 3:
             coresNoTerminal("Espero que tenha gostado :)", "azul")
@@ -70,11 +76,14 @@ def cadastroJogador():
     return resposta
 
 
-def forca(nome):
+def forca(nome, palavras):
     erros = 0
+    acertos = []
+    palavraEscolhida = escolhaPalavra(palavras)
     partesCorpo = ['' for c in range(6)]
     limparTerminal()
-    while erros <= 6:
+    while erros < 6:
+        cont = 0
         match erros:
             case 1:
                 partesCorpo[0] = coresNoTerminal("O", "vermelho", 1)
@@ -99,18 +108,38 @@ def forca(nome):
 |
 -                                                                                     
 """)
-    coresNoTerminal(f"## Jogador: {nome} ##", "roxo")
+        coresNoTerminal(f"## Jogador: {nome} ##", "roxo")
+        print("Adivinha: ", end='')
+        for c in palavraEscolhida:
+            if c in acertos:
+                cont += 1
+                print(c, end=" ")
+            else:
+                print("_", end=" ")
+        if cont == len(palavraEscolhida):
+            print()
+            break
+        print("\n")
+        chute = str(input("Letra: ")).upper()
+        if (chute in palavraEscolhida) and (not (chute in acertos)): 
+            acertos.append(chute)
+        elif not (chute in palavraEscolhida): erros += 1
+        limparTerminal()
+    return (6 - erros) * 100
 
 
 
-def ranking():
-    coresNoTerminal("## Top 10 ##", "verde")
+def ranking(podio):
+    coresNoTerminal("## Ranking ##", "verde")
+    for k in podio:
+        print(f"{k} ficou com {podio[k]}")
+    
 
-              
 
 palavras = pegaPalavras('m:\\Meus projetos\\Estruturas-de-dados\\Atividades\\atv002\\palavras.txt')
 continuar = True
+podio = {}
 while continuar:
-    continuar = menu()
+    continuar = escolha(menu(), podio, palavras)
 
 
